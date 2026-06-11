@@ -81,6 +81,7 @@ class OnsettoClient:
 
     def authenticate(self, email: str, password: str, mfa_code: str) -> None:
         """Run the full two-step auth flow and cache the bearer token."""
+        # PART2->FIRST POINT->AUTH TOKEN -> VERIFY -> BEARER TOKEN
         token_resp = self._request_token(email, password)
         logger.info("Credentials accepted; MFA required")
         verify_resp = self._verify_mfa(token_resp.mfa_token, mfa_code)
@@ -106,10 +107,12 @@ class OnsettoClient:
 
     def update_banking(self, routing_number: str, account_number: str) -> BankingResponse:
         payload = BankingRequest(routing_number=routing_number, account_number=account_number)
+        # PART2->SECOND POINT-> call PUT /account/banking with the bearer token (added in _send)
         data = self._send("PUT", "/account/banking", json=payload.model_dump())
         return BankingResponse.model_validate(data)
 
     def update_payment(self, payment: PaymentRequest) -> PaymentResponse:
+        # PART2->SECOND POINT-> call PUT /account/payment with the bearer token (added in _send)
         data = self._send("PUT", "/account/payment", json=payment.model_dump())
         return PaymentResponse.model_validate(data)
 
@@ -120,6 +123,7 @@ class OnsettoClient:
             raise AuthenticationError("Not authenticated; call authenticate() first")
         return {"Authorization": f"Bearer {self._access_token}"}
 
+    # PART2->FOURTH POINT-> rate limits
     @with_rate_limit_retry()
     def _send(
         self,
@@ -145,6 +149,7 @@ class OnsettoClient:
         detail = OnsettoClient._extract_detail(response)
         status = response.status_code
 
+        # PART2->FOURTH POINT-> Handle errors: map each HTTP status to a typed error
         if status == 429:
             retry_after = response.headers.get("Retry-After")
             raise RateLimitError(

@@ -47,6 +47,7 @@ CARD_EXP_YEAR = "2031"
 CARD_CVC = "123"
 
 
+# PART1->FIRST POINT-> Sign in with the test credentials provided to you.
 def sign_in(page: Page, base_url: str, email: str, password: str) -> None:
     page.goto(f"{base_url}/login", wait_until="networkidle")
     page.fill("#email", email)
@@ -55,6 +56,7 @@ def sign_in(page: Page, base_url: str, email: str, password: str) -> None:
     log.info("Submitted credentials")
 
 
+# PART1->SECOND POINT-> Complete the simulated MFA step
 def complete_mfa(page: Page, code: str) -> None:
     # The OTP widget exposes a single hidden input (data-input-otp). Typing the
     # digits drives the React state and enables the Verify button.
@@ -92,12 +94,16 @@ def _save_and_wait(page: Page, save_id: str, summary_testid: str) -> str:
 
 
 def update_banking(page: Page, routing: str, account: str) -> str:
+    # PART1->THIRD POINT-> submit banking: 9-digit routing + 4-17 digit account
+    # PART1->FIFTH POINT-> using the stable #id selectors (#bank-routing, #bank-account, #bank-save)
     page.fill("#bank-routing", routing)
     page.fill("#bank-account", account)
     return _save_and_wait(page, "bank-save", "bank-saved-info")
 
 
 def update_payment(page: Page) -> str:
+    # PART1->FOURTH POINT-> submit payment: cardholder, Luhn card, future expiry, 3-4 digit CVC
+    # PART1->FIFTH POINT-> using the stable #id selectors (#card-holder, #card-number, #card-save)
     page.fill("#card-holder", CARD_HOLDER)
     page.fill("#card-number", CARD_NUMBER)
     page.fill("#card-exp-month", CARD_EXP_MONTH)
@@ -125,12 +131,15 @@ def run() -> int:
             sign_in(page, base_url, email, password)
             complete_mfa(page, mfa_code)
 
+            # PART1->THIRD POINT-> navigate to the Account page (then submit banking below)
             page.goto(f"{base_url}/app/account", wait_until="networkidle")
             log.info("Reached account page")
 
+            # PART1->THIRD & FOURTH POINTS-> submit banking, then payment (see each function)
             bank_text = update_banking(page, BANK_ROUTING, BANK_ACCOUNT)
             payment_text = update_payment(page)
 
+            # PART1->SIXTH POINT-> verify saved data appears in the "last updated" summary
             ok = _verify(bank_text, payment_text)
         except PlaywrightTimeoutError as exc:
             page.screenshot(path="part1_failure.png")

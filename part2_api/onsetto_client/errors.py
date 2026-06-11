@@ -7,6 +7,7 @@ Callers can catch :class:`OnsettoError` broadly, or narrow to a specific failure
 from __future__ import annotations
 
 
+# PART2->FOURTH POINT-> Handle errors gracefully (the typed error vocabulary)
 class OnsettoError(Exception):
     """Base class for all client errors."""
 
