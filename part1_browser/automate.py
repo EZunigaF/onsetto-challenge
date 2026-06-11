@@ -74,7 +74,7 @@ def update_banking(page: Page, routing: str, account: str) -> str:
     # Wait until the summary actually reflects the new account (not the stale value).
     summary = page.locator('[data-testid="bank-saved-info"]').filter(has_text=account[-4:])
     summary.wait_for(state="visible", timeout=10_000)
-    text = page.get_by_test_id("bank-saved-info").inner_text()
+    text = str(page.get_by_test_id("bank-saved-info").inner_text())
     log.info("Banking summary: %s", text.replace("\n", " | "))
     return text
 
@@ -88,7 +88,7 @@ def update_payment(page: Page) -> str:
     page.click("#card-save")
     summary = page.locator('[data-testid="payment-saved-info"]').filter(has_text=CARD_NUMBER[-4:])
     summary.wait_for(state="visible", timeout=10_000)
-    text = page.get_by_test_id("payment-saved-info").inner_text()
+    text = str(page.get_by_test_id("payment-saved-info").inner_text())
     log.info("Payment summary: %s", text.replace("\n", " | "))
     return text
 
