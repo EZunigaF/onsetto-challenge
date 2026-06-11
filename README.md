@@ -23,7 +23,7 @@ Two ways to update the same account on the Onsetto sandbox — **banking details
 ```bash
 git clone https://github.com/EZunigaF/onsetto-challenge.git
 cd onsetto-challenge
-cp .env.example .env        # values are pre-filled with the sandbox test creds
+cp .env.example .env        # then set ONSETTO_PASSWORD (from the challenge email)
 uv sync --extra dev --extra browser
 uv run playwright install chromium    # Part 1 only
 ```
@@ -33,7 +33,7 @@ uv run playwright install chromium    # Part 1 only
 | Variable | Purpose | Default |
 |----------|---------|---------|
 | `ONSETTO_EMAIL` | Sandbox login | `candidate1@onsetto.test` |
-| `ONSETTO_PASSWORD` | Sandbox password | `Password123!` |
+| `ONSETTO_PASSWORD` | Sandbox password (from the challenge email) | — |
 | `ONSETTO_MFA_CODE` | MFA code (sandbox accepts `1234`) | `1234` |
 | `ONSETTO_API_BASE_URL` | Part 2 REST base URL | the published Supabase function URL |
 | `ONSETTO_WEB_BASE_URL` | Part 1 challenge site | `https://challenge.onsetto.dev` |
