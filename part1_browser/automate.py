@@ -67,16 +67,34 @@ def complete_mfa(page: Page, code: str) -> None:
     log.info("Submitted MFA code")
 
 
+def _save_and_wait(page: Page, save_id: str, summary_testid: str) -> str:
+    """Click a save button and wait for its summary panel to actually change.
+
+    We snapshot the summary text *before* saving and wait until it differs. This
+    confirms a real, fresh save (the "last updated" timestamp advances) even when
+    the submitted values match what was already stored — which a "wait for the new
+    value" check would miss.
+    """
+    summary = page.get_by_test_id(summary_testid)
+    before = summary.inner_text()
+    page.click(f"#{save_id}")
+    page.wait_for_function(
+        """([testid, prev]) => {
+            const el = document.querySelector(`[data-testid="${testid}"]`);
+            return el && el.innerText !== prev;
+        }""",
+        arg=[summary_testid, before],
+        timeout=10_000,
+    )
+    text = str(summary.inner_text())
+    log.info("%s: %s", summary_testid, text.replace("\n", " | "))
+    return text
+
+
 def update_banking(page: Page, routing: str, account: str) -> str:
     page.fill("#bank-routing", routing)
     page.fill("#bank-account", account)
-    page.click("#bank-save")
-    # Wait until the summary actually reflects the new account (not the stale value).
-    summary = page.locator('[data-testid="bank-saved-info"]').filter(has_text=account[-4:])
-    summary.wait_for(state="visible", timeout=10_000)
-    text = str(page.get_by_test_id("bank-saved-info").inner_text())
-    log.info("Banking summary: %s", text.replace("\n", " | "))
-    return text
+    return _save_and_wait(page, "bank-save", "bank-saved-info")
 
 
 def update_payment(page: Page) -> str:
@@ -85,12 +103,7 @@ def update_payment(page: Page) -> str:
     page.fill("#card-exp-month", CARD_EXP_MONTH)
     page.fill("#card-exp-year", CARD_EXP_YEAR)
     page.fill("#card-cvc", CARD_CVC)
-    page.click("#card-save")
-    summary = page.locator('[data-testid="payment-saved-info"]').filter(has_text=CARD_NUMBER[-4:])
-    summary.wait_for(state="visible", timeout=10_000)
-    text = str(page.get_by_test_id("payment-saved-info").inner_text())
-    log.info("Payment summary: %s", text.replace("\n", " | "))
-    return text
+    return _save_and_wait(page, "card-save", "payment-saved-info")
 
 
 def run() -> int:
